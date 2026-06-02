@@ -1,13 +1,443 @@
-<script>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Language Tool</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F7;
+            --card-color: #FFFFFF;
+            --text-primary: #2C2C2E;
+            --text-secondary: #8E8E93;
+            --border-radius: 16px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Top Search Area */
+        .search-container {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .main-input {
+            width: 100%;
+            padding: 20px 60px 20px 24px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 20px;
+            background-color: var(--card-color);
+            color: var(--text-primary);
+            box-shadow: var(--shadow);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .main-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .main-input:focus {
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .mic-icon {
+            position: absolute;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            opacity: 0.6;
+            transition: var(--transition);
+        }
+
+        .mic-icon:hover {
+            opacity: 1;
+        }
+
+        /* Category Buttons */
+        .mode-tags {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .tag-btn {
+            padding: 10px 24px;
+            border-radius: 100px;
+            border: none;
+            background-color: #E8E8ED;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tag-btn.active {
+            background-color: var(--text-primary);
+            color: white;
+        }
+
+        .tag-btn:hover:not(.active) {
+            background-color: #D2D2D7;
+        }
+
+        /* Result Cards */
+        .results-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .result-card {
+            background-color: var(--card-color);
+            padding: 32px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .lang-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .star-btn {
+            background: none;
+            border: none;
+            color: #D2D2D7;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .star-btn:hover {
+            color: #FFD60A;
+        }
+
+        .star-btn.active {
+            color: #FFD60A;
+        }
+
+        .card-content {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            letter-spacing: 0.01em;
+            word-break: break-word;
+        }
+
+        /* Bottom Controls */
+        .bottom-controls {
+            margin-top: auto;
+            padding-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .icon-btn:hover {
+            background-color: #E8E8ED;
+            color: var(--text-primary);
+        }
+
+        .review-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 100px;
+            background-color: #E8E8ED;
+            transition: var(--transition);
+        }
+
+        .review-toggle:hover {
+            background-color: #D2D2D7;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--card-color);
+            padding: 32px;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #E8E8ED;
+            background: #F9F9FB;
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--text-secondary);
+            background: #FFFFFF;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary {
+            background: #E8E8ED;
+            color: var(--text-secondary);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        /* Loading state */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+            height: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body { padding: 24px 16px; }
+            .main-input { font-size: 1rem; padding: 16px 50px 16px 20px; }
+            .result-card { padding: 24px; }
+            .card-content { font-size: 1.1rem; }
+            .mode-tags { gap: 8px; }
+            .tag-btn { padding: 8px 16px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="search-container">
+            <input type="text" class="main-input" placeholder="输入中文、English 或 Français...">
+            <div class="mic-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+            </div>
+        </header>
+
+        <nav class="mode-tags">
+            <button class="tag-btn active" onclick="this.classList.toggle('active')">口语</button>
+            <button class="tag-btn" onclick="this.classList.toggle('active')">书面</button>
+            <button class="tag-btn" onclick="this.classList.toggle('active')">礼貌</button>
+            <button class="tag-btn" onclick="this.classList.toggle('active')">随意</button>
+        </nav>
+
+        <main class="results-grid">
+            <article class="result-card">
+                <div class="card-header">
+                    <span class="lang-label">中文</span>
+                    <button class="star-btn" onclick="this.classList.toggle('active')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-content">等待输入...</div>
+            </article>
+
+            <article class="result-card">
+                <div class="card-header">
+                    <span class="lang-label">ENGLISH</span>
+                    <button class="star-btn" onclick="this.classList.toggle('active')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-content">等待输入...</div>
+            </article>
+
+            <article class="result-card">
+                <div class="card-header">
+                    <span class="lang-label">FRANÇAIS</span>
+                    <button class="star-btn" onclick="this.classList.toggle('active')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-content">等待输入...</div>
+            </article>
+        </main>
+
+        <footer class="bottom-controls">
+            <button class="icon-btn" onclick="toggleModal(true)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <span>设置</span>
+            </button>
+            <div class="review-toggle">
+                <span>进入复习模式</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+        </footer>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2 class="modal-title">DeepSeek API 配置</h2>
+            <div class="form-group">
+                <label for="apiKey">API Key</label>
+                <input type="password" id="apiKey" class="form-control" placeholder="sk-...">
+            </div>
+            <div class="form-group">
+                <label for="baseUrl">Base URL</label>
+                <input type="text" id="baseUrl" class="form-control" placeholder="https://api.deepseek.com/v1">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="toggleModal(false)">取消</button>
+                <button class="btn-primary" onclick="saveSettings()">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
         // Storage Logic
         function saveSettings() {
             const apiKey = document.getElementById('apiKey').value.trim();
             const baseUrl = document.getElementById('baseUrl').value.trim();
             localStorage.setItem('ai_api_key', apiKey);
-            // 如果用户没填 Base URL，默认帮其填入 DeepSeek 官方接口地址
             localStorage.setItem('ai_base_url', baseUrl || 'https://api.deepseek.com/v1');
             toggleModal(false);
-            alert('DeepSeek 配置已安全保存在本地！');
+            alert('DeepSeek 配置已保存');
         }
 
         function loadSettings() {
@@ -34,39 +464,38 @@
             let baseUrl = localStorage.getItem('ai_base_url') || 'https://api.deepseek.com/v1';
 
             if (!apiKey) {
-                alert('请先点击左下角设置，配置您的 DeepSeek API Key');
+                alert('请先在设置中配置 DeepSeek API Key');
                 toggleModal(true);
                 return;
             }
 
-            // 规范化路径：防止结尾多出 /
             if (baseUrl.endsWith('/')) {
                 baseUrl = baseUrl.slice(0, -1);
             }
 
-            // 获取卡片顶部的标签状态（口语、书面、礼貌、随意）
+            // Check active tone tags
             const activeTones = Array.from(document.querySelectorAll('.tag-btn.active'))
                                    .map(btn => btn.innerText);
             
             let finalPrompt = userInput;
             if (activeTones.length > 0) {
-                finalPrompt += `（请注意：翻译和例句需特别符合【${activeTones.join('、')}】的语境和表达习惯）`;
+                finalPrompt += `（请注意：翻译和例句需符合【${activeTones.join('、')}】的场景和语气）`;
             }
 
-            // 触发优雅的骨架屏闪烁
+            // Show shimmer loader
             renderLoading();
 
             const systemPrompt = `你是一个精通中、英、法的三语语言学习专家。
-你的任务是对用户输入的内容进行地道的互译、润色和语言点拓展。
+你的任务是对用户输入的内容进行翻译、润色和语言点拓展。
 - 如果输入是【单词或词组】：返回它在中、英、法三语中的核心意思、音标，并附带 1-2 个实用的双语例句或语法注意点。
-- 如果输入是【完整的长句子】：直接提供地道、符合语境的三语互译，并在 extra 中简要说明句子中的核心短语、语法现象或表达语气。
+- 如果输入是【完整的长句子】：直接提供地道、符合语境的三语互译，并在 extra 中简要说明句子中的核心短语或语气。
 
-请必须严格以 JSON 格式返回数据。绝对不要包含任何 Markdown 格式包裹（例如不要带 \`\`\`json 标记），确保内容可以直接被解析。
+请必须严格以纯 JSON 格式返回数据，绝对不要包含任何 Markdown 格式包裹（如不要带 \`\`\`json 标记），确保内容可以直接被解析。
 JSON 结构必须严格如下：
 {
-  "zh": { "content": "中文核心翻译或词条", "extra": "音标 / 实用例句 / 补充说明" },
-  "en": { "content": "English translation or word", "extra": "Phonetic / Example sentences / Usage" },
-  "fr": { "content": "Traduction en français", "extra": "Phonétique / Exemples / Remarques" }
+  "zh": { "content": "内容", "extra": "音标/补充" },
+  "en": { "content": "Content", "extra": "Phonetic/Info" },
+  "fr": { "content": "Contenu", "extra": "Phonétique/Info" }
 }`;
 
             try {
@@ -77,12 +506,11 @@ JSON 结构必须严格如下：
                         'Authorization': `Bearer ${apiKey}`
                     },
                     body: JSON.stringify({
-                        model: "deepseek-chat", // 强行指定 DeepSeek 模型名字
+                        model: "deepseek-chat",
                         messages: [
                             { role: "system", content: systemPrompt },
                             { role: "user", content: finalPrompt }
                         ],
-                        // 开启 DeepSeek 的纯 JSON 输出模式
                         response_format: { type: "json_object" },
                         temperature: 0.3
                     })
@@ -90,30 +518,29 @@ JSON 结构必须严格如下：
 
                 if (!response.ok) {
                     const errText = await response.text();
-                    throw new Error(`HTTP 错误! 状态码: ${response.status}, 原因: ${errText}`);
+                    throw new Error(`HTTP 错误! 状态码: ${response.status}`);
                 }
 
                 const data = await response.json();
-                
-                // 安全清洗：以防部分第三方中转渠道强行给 JSON 加上了 Markdown 代码块
                 let rawContent = data.choices[0].message.content.trim();
+                
+                // Anti-markdown cleaning
                 if (rawContent.startsWith("```")) {
                     rawContent = rawContent.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
                 }
 
                 const result = JSON.parse(rawContent);
                 renderResults(result);
-
             } catch (error) {
                 console.error('DeepSeek Request Error:', error);
-                alert(`请求失败：${error.message}\n请确认设置里填写的是 DeepSeek 官方或正确的代理地址。`);
+                alert('请求失败，请检查网络或 API 设置');
                 resetCards();
             }
         }
 
         function renderLoading() {
             document.querySelectorAll('.card-content').forEach(el => {
-                el.innerHTML = '<div class="loading-shimmer"></div><div class="loading-shimmer" style="width:80%"></div><div class="loading-shimmer" style="width:50%"></div>';
+                el.innerHTML = '<div class="loading-shimmer"></div><div class="loading-shimmer" style="width:80%"></div>';
             });
         }
 
@@ -127,16 +554,13 @@ JSON 结构必须严格如下：
             document.querySelectorAll('.result-card').forEach(card => {
                 const label = card.querySelector('.lang-label').innerText.trim().toUpperCase();
                 const content = card.querySelector('.card-content');
+                const langData = mappings[label];
                 
-                let langData = mappings[label];
-                if (label === '中文') langData = mappings['中文'];
-
                 if (langData) {
-                    // 把大模型返回的文本中的换行符 \\n 转换成网页的 <br> 标签，排版更美观
                     const formattedExtra = langData.extra ? langData.extra.replace(/\n/g, '<br>') : '';
                     content.innerHTML = `
-                        <div style="font-weight: 600; font-size: 1.3rem; margin-bottom: 12px; color: var(--text-primary);">${langData.content}</div>
-                        <div style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5; background: #F9F9FB; padding: 12px; border-radius: 8px;">${formattedExtra}</div>
+                        <div style="font-weight: 600; margin-bottom: 8px;">${langData.content}</div>
+                        <div style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.4;">${formattedExtra}</div>
                     `;
                 }
             });
@@ -148,3 +572,5 @@ JSON 结构必须严格如下：
             });
         }
     </script>
+</body>
+</html>
